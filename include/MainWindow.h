@@ -1,4 +1,8 @@
-#include <QWidget>
+#include <QtGui>
+#include <Looper.h>
+#include <vector>
+
+using namespace std;
 
 class MainWindow : public QWidget
 {
@@ -6,6 +10,17 @@ class MainWindow : public QWidget
 
     public:
         MainWindow();
-        ~MainWindow();
+
+    private:
+        QGridLayout* layout;
+        QPushButton* startButton;
+        QPushButton* stopButton;
+        vector<Looper*> loopers;
+        QPushButton* addButton;
+
+        void refreshLayout(void);
+
+    public slots:
+        void addLooper(void);
 
 };

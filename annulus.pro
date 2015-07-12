@@ -11,5 +11,10 @@ MOC_DIR = build
 DESTDIR = bin
 
 HEADERS += include/MainWindow.h
-SOURCES += src/MainWindow.cpp
+HEADERS += include/Looper.h
+
 SOURCES += src/main.cpp
+SOURCES += src/MainWindow.cpp
+SOURCES += src/Looper.cpp
+
+LIBS += -lsndfile -lasound
