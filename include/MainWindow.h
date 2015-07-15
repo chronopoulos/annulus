@@ -1,6 +1,6 @@
-#include <QtGui>
-#include <Looper.h>
 #include <vector>
+#include <QtGui>
+#include <AudioThread.h>
 
 using namespace std;
 
@@ -15,12 +15,16 @@ class MainWindow : public QWidget
         QGridLayout* layout;
         QPushButton* startButton;
         QPushButton* stopButton;
-        vector<Looper*> loopers;
+        vector<Looper*>* loopers;
         QPushButton* addButton;
 
-        void refreshLayout(void);
+        void refreshLoopers(void);
+
+        AudioThread* audioThread;
 
     public slots:
         void addLooper(void);
+        void startAudio(void);
+        void stopAudio(void);
 
 };

@@ -12,9 +12,14 @@ DESTDIR = bin
 
 HEADERS += include/MainWindow.h
 HEADERS += include/Looper.h
+HEADERS += include/AudioThread.h
 
 SOURCES += src/main.cpp
 SOURCES += src/MainWindow.cpp
 SOURCES += src/Looper.cpp
+SOURCES += src/AudioThread.cpp
 
 LIBS += -lsndfile -lasound
+
+# GDB
+QMAKE_CXXFLAGS += -g

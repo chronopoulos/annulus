@@ -1,5 +1,4 @@
 #include <iostream>
-#include <QtGui>
 #include <QtCore>
 #include <MainWindow.h>
 
@@ -14,10 +13,12 @@ MainWindow::MainWindow(void) : QWidget() {
     startButton->setIcon(QIcon("img/play.png"));
     stopButton = new QPushButton();
     stopButton->setIcon(QIcon("img/pause.png"));
+    QObject::connect(startButton, SIGNAL(clicked(bool)),
+                        this, SLOT(startAudio()));
+    QObject::connect(stopButton, SIGNAL(clicked(bool)),
+                        this, SLOT(stopAudio()));
 
-    loopers = vector<Looper*>();
-
-    loopers.push_back(new Looper);
+    loopers = new vector<Looper*>();
 
     addButton = new QPushButton("+");
     QObject::connect(addButton, SIGNAL(clicked(bool)),
@@ -26,26 +27,42 @@ MainWindow::MainWindow(void) : QWidget() {
     layout->addWidget(startButton, 0,0);
     layout->addWidget(stopButton, 0,1);
     layout->addWidget(addButton, 1,0, 1,2);
-    refreshLayout();
 
     this->setLayout(layout);
     this->setWindowTitle("annulus");
     this->setMinimumWidth(300);
 
+    audioThread = new AudioThread(this, loopers);
+
 }
 
-void MainWindow::refreshLayout(void) {
+void MainWindow::refreshLoopers(void) {
 
-    int nloopers = loopers.size();
+    int nloopers = loopers->size();
     for (int i=0; i<nloopers; i++) {
-        layout->addWidget(loopers[i], i+2,0, 1,2);
+        layout->addWidget(loopers->at(i), i+2,0, 1,2);
     }
 
 }
 
 void MainWindow::addLooper(void) {
 
-    loopers.push_back(new Looper);
-    refreshLayout();
+    loopers->push_back(new Looper);
+    refreshLoopers();
 
 }
+
+void MainWindow::startAudio(void) {
+
+    audioThread->start();
+    cout << "AudioThread started." << endl;
+
+}
+
+void MainWindow::stopAudio(void) {
+
+    audioThread->terminate();
+    cout << "AudioThread terminated." << endl;
+
+}
+
