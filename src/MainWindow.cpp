@@ -11,8 +11,11 @@ MainWindow::MainWindow(void) : QWidget() {
 
     startButton = new QPushButton();
     startButton->setIcon(QIcon("img/play.png"));
+    startButton->setFocusPolicy(Qt::NoFocus);
     stopButton = new QPushButton();
     stopButton->setIcon(QIcon("img/pause.png"));
+    stopButton->setFocusPolicy(Qt::NoFocus);
+
     QObject::connect(startButton, SIGNAL(clicked(bool)),
                         this, SLOT(startAudio()));
     QObject::connect(stopButton, SIGNAL(clicked(bool)),
@@ -21,6 +24,7 @@ MainWindow::MainWindow(void) : QWidget() {
     loopers = new vector<Looper*>();
 
     addButton = new QPushButton("+");
+    addButton->setFocusPolicy(Qt::NoFocus);
     QObject::connect(addButton, SIGNAL(clicked(bool)),
                         this, SLOT(addLooper()));
 
@@ -55,14 +59,24 @@ void MainWindow::addLooper(void) {
 void MainWindow::startAudio(void) {
 
     audioThread->start();
-    cout << "AudioThread started." << endl;
 
 }
 
 void MainWindow::stopAudio(void) {
 
-    audioThread->terminate();
-    cout << "AudioThread terminated." << endl;
+    audioThread->stop();
 
 }
+
+void MainWindow::keyPressEvent(QKeyEvent* k) {
+
+    if (k->key()==Qt::Key_Space) {
+        if (!k->isAutoRepeat()) {
+            cout << "spacebar caught!" << endl;
+        }
+    }
+
+}
+
+
 

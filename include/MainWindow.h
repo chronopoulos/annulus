@@ -26,5 +26,6 @@ class MainWindow : public QWidget
         void addLooper(void);
         void startAudio(void);
         void stopAudio(void);
+        void keyPressEvent(QKeyEvent*);
 
 };
