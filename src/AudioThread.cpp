@@ -122,6 +122,7 @@ void AudioThread::run()
 
         if (stopRequested) {
             cout << "Stop Requested: breaking out of audio loop.." << endl;
+            snd_pcm_drain(pcm_handle);
             break;
         }
 
