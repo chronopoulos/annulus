@@ -12,7 +12,8 @@ class AudioThread : public QThread
 
     public:
         AudioThread(QObject*, vector<Looper*>*);
-        void run();
+        void run(void);
+        void stop(void);
 
     private:
         vector<Looper*>* loopers;
@@ -30,5 +31,7 @@ class AudioThread : public QThread
         void setHardwareParams(void);
         void allocatePeriodBuffer(void);
         void setSoftwareParams(void);
+
+        bool stopRequested;
 
 };

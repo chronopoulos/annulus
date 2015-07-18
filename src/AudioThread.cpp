@@ -14,8 +14,6 @@ AudioThread::AudioThread(QObject* parent, vector<Looper*>* a_loopers)
     allocatePeriodBuffer();
     setSoftwareParams();
 
-    snd_pcm_prepare(pcm_handle);
-    snd_pcm_start(pcm_handle);
     cout << endl << "PCM prepared and started!" << endl;
 
 }
@@ -23,7 +21,15 @@ AudioThread::AudioThread(QObject* parent, vector<Looper*>* a_loopers)
 void AudioThread::openPCM(void)
 {
     // open pcm device
-	snd_pcm_open(&pcm_handle, "default", SND_PCM_STREAM_PLAYBACK, 0);
+	//snd_pcm_open(&pcm_handle, "default", SND_PCM_STREAM_PLAYBACK, 0);
+    int err;
+	err = snd_pcm_open(&pcm_handle, "sysdefault:CARD=PCH",
+                        SND_PCM_STREAM_PLAYBACK, 0);
+    if (err) {
+        cout << "Error in AudioThread::openPCM" << endl;
+        cout << snd_strerror(err) << endl;
+        exit(1);
+    }
 }
 
 void AudioThread::setHardwareParams(void)
@@ -65,6 +71,9 @@ void AudioThread::allocatePeriodBuffer(void)
     snd_pcm_hw_params_get_buffer_size(hw_params, &nframes_buffer);
 	snd_pcm_hw_params_get_period_size(hw_params, &nframes_period, 0);
 
+    cout << "Buffer size: " << nframes_buffer << " frames" << endl;
+    cout << "Period size: " << nframes_period << " frames" << endl;
+
     // allocate period buffer
     periodBuffer = (short*) malloc(nchannels*nframes_period*sizeof(short));
     // -> probably don't need to do this with snd_pcm_period_malloc() or whatever
@@ -72,7 +81,7 @@ void AudioThread::allocatePeriodBuffer(void)
 
 void AudioThread::setSoftwareParams(void)
 {
-    int err;
+    int err = 0;
     err = snd_pcm_sw_params_malloc(&sw_params);
 
     // load sw_params structure
@@ -96,37 +105,65 @@ void AudioThread::setSoftwareParams(void)
 void AudioThread::run()
 {
 
-    snd_pcm_sframes_t avail;
+    snd_pcm_sframes_t avail, framesWritten;
     unsigned int frameIndex_period;
+    int err;
 
+    snd_pcm_prepare(pcm_handle);
+    //snd_pcm_start(pcm_handle);
+
+    stopRequested = false;
+
+    cout << "Entering audio loop.." << endl;
     while(1) {
+
+        if (stopRequested) {
+            cout << "Stop Requested: breaking out of audio loop.." << endl;
+            break;
+        }
 
         if (loopers->size() > 0) {
             if (loopers->at(0)->loaded) {
-                if ((snd_pcm_wait (pcm_handle, 1000)) < 0) {
-                        fprintf (stderr, "poll failed (%s)\n", strerror (errno));
-                        break;
+
+                err = snd_pcm_wait (pcm_handle, 1000);
+                if (err==0) {
+                    cout << "snd_pcm_wait timed out (that's ok) " << endl;
                 }
 
-                /* find out how much space is available for playback data */
+                // might want to think about using snd_pcm_avail() here instead
+                avail = snd_pcm_avail_update (pcm_handle);
+                if (avail < 0) {
 
-                if ((avail = snd_pcm_avail_update (pcm_handle)) < 0) {
-                    if (avail == -EPIPE) {
-                        fprintf (stderr, "an xrun occured\n");
-                        break;
-                    } else {
-                        fprintf (stderr, "unknown ALSA avail update return value (%d)\n", 
-                             (int)avail);
-                        break;
-                    }
+                    cout << "snd_pcm_avail returned error: " << snd_strerror(avail) << endl;
+
                 } else {
+
+                    cout << "avail, buffer = " << avail << ", "
+                         << (snd_pcm_sframes_t)nframes_buffer - avail << endl;
+
                     if ( (snd_pcm_uframes_t)avail > nframes_period ) {
+
                         for (frameIndex_period = 0; frameIndex_period< nframes_period; frameIndex_period++) {
                             periodBuffer[2*frameIndex_period] = loopers->at(0)->getNextSample();
                             periodBuffer[2*frameIndex_period+1] = loopers->at(0)->getNextSample();
                         }
-                        if (snd_pcm_writei(pcm_handle, periodBuffer, nframes_period) == -EPIPE) {
-                            printf("XRUN.\n");
+
+                        framesWritten = snd_pcm_writei(pcm_handle, periodBuffer, nframes_period);
+                        if (framesWritten < 0) {
+                            switch (framesWritten) {
+                                case -EBADFD:
+                                    cout << "PCM is not in the right state" << endl;
+                                    break;
+                                case -EPIPE:
+                                    cout << "an underrun occurred" << endl;
+                                    break;
+                                case -ESTRPIPE:
+                                    cout << "a suspend event occurred (stream is suspended and waiting for an application recovery)" << endl;
+                                    break;
+                            }
+                            break;
+                        } else if ((snd_pcm_uframes_t)framesWritten < nframes_period) {
+                            cout << "framesWritten was less that nframes_period; that's weird" << endl;
                         }
                     }
                 }
@@ -138,5 +175,11 @@ void AudioThread::run()
 
 
     }
+
+}
+
+void AudioThread::stop(void) {
+
+    stopRequested = true;
 
 }
