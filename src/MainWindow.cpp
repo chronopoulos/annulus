@@ -35,7 +35,8 @@ MainWindow::MainWindow(void) : QWidget() {
                         audioThread, SLOT(start(void)));
     QObject::connect(playPauseButton, SIGNAL(pauseSelected(void)),
                         audioThread, SLOT(stop(void)));
-
+    QObject::connect(audioThread, SIGNAL(xrunOccurred(void)),
+                        playPauseButton, SLOT(reset(void)));
 
 }
 

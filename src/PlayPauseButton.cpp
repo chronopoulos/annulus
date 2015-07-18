@@ -28,3 +28,9 @@ void PlayPauseButton::toggle(void) {
     }
 
 }
+
+void PlayPauseButton::reset(void) {
+        this->setIcon(QIcon("img/play.png"));
+        this->setStyleSheet("");
+        isPlaying = false;
+}

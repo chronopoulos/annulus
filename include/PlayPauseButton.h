@@ -13,6 +13,7 @@ class PlayPauseButton : public QPushButton
 
     public slots:
         void toggle(void);
+        void reset(void);
 
     signals:
         void playSelected(void);

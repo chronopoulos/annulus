@@ -24,4 +24,4 @@ SOURCES += src/PlayPauseButton.cpp
 LIBS += -lsndfile -lasound
 
 # GDB
-QMAKE_CXXFLAGS += -g
+#QMAKE_CXXFLAGS += -g

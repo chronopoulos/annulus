@@ -21,10 +21,13 @@ AudioThread::AudioThread(QObject* parent, vector<Looper*>* a_loopers)
 void AudioThread::openPCM(void)
 {
     // open pcm device
-	//snd_pcm_open(&pcm_handle, "default", SND_PCM_STREAM_PLAYBACK, 0);
     int err;
+
+	//err = snd_pcm_open(&pcm_handle, "default",
+    //                    SND_PCM_STREAM_PLAYBACK, 0);
 	err = snd_pcm_open(&pcm_handle, "sysdefault:CARD=PCH",
                         SND_PCM_STREAM_PLAYBACK, 0);
+
     if (err) {
         cout << "Error in AudioThread::openPCM" << endl;
         cout << snd_strerror(err) << endl;
@@ -156,6 +159,7 @@ void AudioThread::run()
                                     break;
                                 case -EPIPE:
                                     cout << "an underrun occurred" << endl;
+                                    emit xrunOccurred();
                                     break;
                                 case -ESTRPIPE:
                                     cout << "a suspend event occurred (stream is suspended and waiting for an application recovery)" << endl;

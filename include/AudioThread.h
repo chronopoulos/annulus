@@ -36,4 +36,7 @@ class AudioThread : public QThread
 
         bool stopRequested;
 
+    signals:
+        void xrunOccurred(void);
+
 };
