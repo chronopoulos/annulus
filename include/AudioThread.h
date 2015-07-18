@@ -13,6 +13,8 @@ class AudioThread : public QThread
     public:
         AudioThread(QObject*, vector<Looper*>*);
         void run(void);
+
+    public slots:
         void stop(void);
 
     private:

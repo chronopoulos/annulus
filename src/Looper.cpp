@@ -11,10 +11,9 @@ using namespace std;
 
 Looper::Looper() : QPushButton("(click to load loop)") {
 
+    this->setFocusPolicy(Qt::NoFocus);
     QObject::connect(this, SIGNAL(clicked(bool)), this, SLOT(importFile()));
-
     loaded = false;
-
 }
 
 Looper::~Looper() {

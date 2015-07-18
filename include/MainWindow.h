@@ -1,6 +1,7 @@
 #include <vector>
 #include <QtGui>
 #include <AudioThread.h>
+#include <PlayPauseButton.h>
 
 using namespace std;
 
@@ -13,8 +14,8 @@ class MainWindow : public QWidget
 
     private:
         QGridLayout* layout;
-        QPushButton* startButton;
-        QPushButton* stopButton;
+        PlayPauseButton* playPauseButton;
+        QPushButton* settingsButton;
         vector<Looper*>* loopers;
         QPushButton* addButton;
 

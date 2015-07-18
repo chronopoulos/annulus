@@ -13,11 +13,13 @@ DESTDIR = bin
 HEADERS += include/MainWindow.h
 HEADERS += include/Looper.h
 HEADERS += include/AudioThread.h
+HEADERS += include/PlayPauseButton.h
 
 SOURCES += src/main.cpp
 SOURCES += src/MainWindow.cpp
 SOURCES += src/Looper.cpp
 SOURCES += src/AudioThread.cpp
+SOURCES += src/PlayPauseButton.cpp
 
 LIBS += -lsndfile -lasound
 
