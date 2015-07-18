@@ -44,11 +44,11 @@ void Looper::importFile(void) {
         sf_close(sf);
         QStringList path_split = path.split("/");
         filename = path_split.at(path_split.size()-1);
-    }
 
-    nextIndex = 0;
-    loaded = true;
-    this->setText(filename);
+        nextIndex = 0;
+        loaded = true;
+        this->setText(filename);
+    }
 
 }
 
