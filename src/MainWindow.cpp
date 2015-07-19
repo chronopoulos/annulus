@@ -45,13 +45,13 @@ MainWindow::MainWindow(void) : QWidget() {
 void MainWindow::addLoopers(void) {
 
     QStringList files = QFileDialog::getOpenFileNames(this, "Select Loops",
-            "/home/chrono/music/samples");
+            "/home/chrono/music/samples/loops/annulus");
     int n = files.size();
     if (n>0) {
         QMutexLocker locker(&loopersMutex);
         cout << "addLoopers got mutex" << endl;
         for (int i=0; i<files.size(); i++) {
-            loopers->push_back(new Looper(files.at(i)));
+            loopers->push_back(new Looper(this, files.at(i)));
         }
         refreshLoopers();
     }
@@ -64,6 +64,7 @@ void MainWindow::refreshLoopers(void) {
     for (int i=0; i<nloopers; i++) {
         layout->addWidget(loopers->at(i), i+2,0, 1,2);
     }
+    this->show();
 
 }
 

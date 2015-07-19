@@ -1,20 +1,26 @@
-#include <QPushButton>
-#include <QString>
+#include <QtGui>
 
-class Looper : public QPushButton
+class Looper : public QFrame
 {
     Q_OBJECT
 
     public:
-        Looper(QString);
+        Looper(QWidget*, QString);
         short getNextSample(void);
         void reset(void);
 
     public slots:
         void browseLoops(void);
         void importFile(void);
+        void updateProgressBar(int);
 
     private:
+        QPushButton* loadButton;
+        QProgressBar* progressBar;
+        QDial* knob;
+
+        QGridLayout* layout;
+
         QString path;
         QString filename;
         int nframes;
@@ -22,5 +28,10 @@ class Looper : public QPushButton
         short* sampleBuffer;
         int nextIndex;
         short tmpSample;
+
+        int progressBarInterval;
+
+    signals:
+        void progressBarUpdated(int);
 
 };
