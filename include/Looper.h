@@ -6,12 +6,12 @@ class Looper : public QPushButton
     Q_OBJECT
 
     public:
-        Looper();
-        ~Looper();
-        bool loaded;
+        Looper(QString);
         short getNextSample(void);
+        void reset(void);
 
     public slots:
+        void browseLoops(void);
         void importFile(void);
 
     private:

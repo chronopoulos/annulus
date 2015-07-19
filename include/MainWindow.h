@@ -16,7 +16,10 @@ class MainWindow : public QWidget
         QGridLayout* layout;
         PlayPauseButton* playPauseButton;
         QPushButton* settingsButton;
+
+        QMutex loopersMutex;
         vector<Looper*>* loopers;
+
         QPushButton* addButton;
 
         void refreshLoopers(void);
@@ -24,7 +27,7 @@ class MainWindow : public QWidget
         AudioThread* audioThread;
 
     public slots:
-        void addLooper(void);
+        void addLoopers(void);
         void startAudio(void);
         void stopAudio(void);
         void keyPressEvent(QKeyEvent*);

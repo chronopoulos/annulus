@@ -15,12 +15,14 @@ MainWindow::MainWindow(void) : QWidget() {
     settingsButton->setFocusPolicy(Qt::NoFocus);
     settingsButton->setIcon(QIcon("img/settings.png"));
 
+    loopersMutex.lock();
     loopers = new vector<Looper*>();
+    loopersMutex.unlock();
 
     addButton = new QPushButton("+");
     addButton->setFocusPolicy(Qt::NoFocus);
     QObject::connect(addButton, SIGNAL(clicked(bool)),
-                        this, SLOT(addLooper()));
+                        this, SLOT(addLoopers()));
 
     layout->addWidget(playPauseButton, 0,0);
     layout->addWidget(settingsButton, 0,1);
@@ -30,7 +32,7 @@ MainWindow::MainWindow(void) : QWidget() {
     this->setWindowTitle("annulus");
     this->setMinimumWidth(300);
 
-    audioThread = new AudioThread(this, loopers);
+    audioThread = new AudioThread(this, loopers, &loopersMutex);
     QObject::connect(playPauseButton, SIGNAL(playSelected(void)),
                         audioThread, SLOT(start(void)));
     QObject::connect(playPauseButton, SIGNAL(pauseSelected(void)),
@@ -40,19 +42,28 @@ MainWindow::MainWindow(void) : QWidget() {
 
 }
 
+void MainWindow::addLoopers(void) {
+
+    QStringList files = QFileDialog::getOpenFileNames(this, "Select Loops",
+            "/home/chrono/music/samples");
+    int n = files.size();
+    if (n>0) {
+        QMutexLocker locker(&loopersMutex);
+        cout << "addLoopers got mutex" << endl;
+        for (int i=0; i<files.size(); i++) {
+            loopers->push_back(new Looper(files.at(i)));
+        }
+        refreshLoopers();
+    }
+
+}
+
 void MainWindow::refreshLoopers(void) {
 
     int nloopers = loopers->size();
     for (int i=0; i<nloopers; i++) {
         layout->addWidget(loopers->at(i), i+2,0, 1,2);
     }
-
-}
-
-void MainWindow::addLooper(void) {
-
-    loopers->push_back(new Looper);
-    refreshLoopers();
 
 }
 
@@ -70,9 +81,14 @@ void MainWindow::stopAudio(void) {
 
 void MainWindow::keyPressEvent(QKeyEvent* k) {
 
-    if (k->key()==Qt::Key_Space) {
-        if (!k->isAutoRepeat()) {
-            playPauseButton->toggle();
+    if (!k->isAutoRepeat()) {
+        switch (k->key()) {
+            case Qt::Key_Space:
+                playPauseButton->toggle();
+                break;
+            case Qt::Key_I:
+                addLoopers();
+                break;
         }
     }
 

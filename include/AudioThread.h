@@ -11,13 +11,14 @@ class AudioThread : public QThread
     Q_OBJECT
 
     public:
-        AudioThread(QObject*, vector<Looper*>*);
+        AudioThread(QObject*, vector<Looper*>*, QMutex*);
         void run(void);
 
     public slots:
         void stop(void);
 
     private:
+        QMutex* loopersMutex;
         vector<Looper*>* loopers;
 
         snd_pcm_t* pcm_handle;

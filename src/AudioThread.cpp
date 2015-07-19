@@ -3,18 +3,18 @@
 
 using namespace std;
 
-AudioThread::AudioThread(QObject* parent, vector<Looper*>* a_loopers)
+AudioThread::AudioThread(QObject* parent, vector<Looper*>* loopers, QMutex* loopersMutex)
     : QThread(parent)
 {
 
-    loopers = a_loopers;
+    this->loopers = loopers;
+    this->loopersMutex = loopersMutex;
 
     openPCM();
     setHardwareParams();
     allocatePeriodBuffer();
     setSoftwareParams();
 
-    cout << endl << "PCM prepared and started!" << endl;
 
 }
 
@@ -89,9 +89,9 @@ void AudioThread::setSoftwareParams(void)
 
     // load sw_params structure
     err = snd_pcm_sw_params_current (pcm_handle, sw_params);
-    err = snd_pcm_sw_params_set_avail_min (pcm_handle, sw_params,
-        nframes_buffer-nframes_period);
-    err = snd_pcm_sw_params_set_start_threshold (pcm_handle, sw_params, 0U);
+    //err = snd_pcm_sw_params_set_avail_min (pcm_handle, sw_params,
+    //    nframes_buffer-nframes_period);
+    err = snd_pcm_sw_params_set_start_threshold (pcm_handle, sw_params, nframes_period);
 
     // set software params
     err = snd_pcm_sw_params (pcm_handle, sw_params);
@@ -110,70 +110,74 @@ void AudioThread::run()
 
     snd_pcm_sframes_t avail, framesWritten;
     unsigned int frameIndex_period;
-    int err;
-
-    snd_pcm_prepare(pcm_handle);
-    //snd_pcm_start(pcm_handle);
 
     stopRequested = false;
+
+    // reset all loopers
+    loopersMutex->lock();
+    for (vector<Looper*>::iterator looper = loopers->begin(); looper != loopers->end(); looper++) {
+        (*looper)->reset();
+    }
+    loopersMutex->unlock();
+
+    snd_pcm_prepare(pcm_handle);
 
     cout << "Entering audio loop.." << endl;
     while(1) {
 
         if (stopRequested) {
             cout << "Stop Requested: breaking out of audio loop.." << endl;
-            snd_pcm_drain(pcm_handle);
+            //snd_pcm_drain(pcm_handle);
+            snd_pcm_drop(pcm_handle);
             break;
         }
 
-        if (loopers->size() > 0) {
-            if (loopers->at(0)->loaded) {
+        if (loopers->size() > 0) { // need to lock mutex here?
 
-                err = snd_pcm_wait (pcm_handle, 1000);
-                if (err==0) {
-                    cout << "snd_pcm_wait timed out (that's ok) " << endl;
-                }
+            // might want to think about using snd_pcm_avail() here instead
+            avail = snd_pcm_avail_update (pcm_handle);
+            if (avail < 0) {
 
-                // might want to think about using snd_pcm_avail() here instead
-                avail = snd_pcm_avail_update (pcm_handle);
-                if (avail < 0) {
+                cout << "snd_pcm_avail returned error: " << snd_strerror(avail) << endl;
 
-                    cout << "snd_pcm_avail returned error: " << snd_strerror(avail) << endl;
+            } else {
 
-                } else {
+                cout << "avail, used = " << avail << ", "
+                     << (snd_pcm_sframes_t)nframes_buffer - avail << endl;
 
-                    cout << "avail, buffer = " << avail << ", "
-                         << (snd_pcm_sframes_t)nframes_buffer - avail << endl;
+                if ( (snd_pcm_uframes_t)avail > nframes_period ) {
 
-                    if ( (snd_pcm_uframes_t)avail > nframes_period ) {
-
-                        for (frameIndex_period = 0; frameIndex_period< nframes_period; frameIndex_period++) {
-                            periodBuffer[2*frameIndex_period] = loopers->at(0)->getNextSample();
-                            periodBuffer[2*frameIndex_period+1] = loopers->at(0)->getNextSample();
-                        }
-
-                        framesWritten = snd_pcm_writei(pcm_handle, periodBuffer, nframes_period);
-                        if (framesWritten < 0) {
-                            switch (framesWritten) {
-                                case -EBADFD:
-                                    cout << "PCM is not in the right state" << endl;
-                                    break;
-                                case -EPIPE:
-                                    cout << "an underrun occurred" << endl;
-                                    emit xrunOccurred();
-                                    break;
-                                case -ESTRPIPE:
-                                    cout << "a suspend event occurred (stream is suspended and waiting for an application recovery)" << endl;
-                                    break;
-                            }
-                            break;
-                        } else if ((snd_pcm_uframes_t)framesWritten < nframes_period) {
-                            cout << "framesWritten was less that nframes_period; that's weird" << endl;
+                    memset(periodBuffer, 0, nchannels*nframes_period*sizeof(short));
+                    loopersMutex->lock();
+                    for (frameIndex_period = 0; frameIndex_period< nframes_period; frameIndex_period++) {
+                        for (vector<Looper*>::iterator looper = loopers->begin(); looper != loopers->end(); looper++) {
+                            periodBuffer[2*frameIndex_period] += (*looper)->getNextSample();
+                            periodBuffer[2*frameIndex_period+1] += (*looper)->getNextSample();
                         }
                     }
-                }
+                    loopersMutex->unlock();
 
+                    framesWritten = snd_pcm_writei(pcm_handle, periodBuffer, nframes_period);
+                    if (framesWritten < 0) {
+                        switch (framesWritten) {
+                            case -EBADFD:
+                                cout << "PCM is not in the right state" << endl;
+                                break;
+                            case -EPIPE:
+                                cout << "an underrun occurred" << endl;
+                                emit xrunOccurred();
+                                break;
+                            case -ESTRPIPE:
+                                cout << "a suspend event occurred (stream is suspended and waiting for an application recovery)" << endl;
+                                break;
+                        }
+                        break;
+                    } else if ((snd_pcm_uframes_t)framesWritten < nframes_period) {
+                        cout << "framesWritten was less that nframes_period; that's weird" << endl;
+                    }
+                }
             }
+
         } else {
             sleep(0.01);
         } 
