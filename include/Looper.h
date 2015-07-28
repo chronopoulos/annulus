@@ -13,11 +13,14 @@ class Looper : public QFrame
         void browseLoops(void);
         void importFile(void);
         void updateProgressBar(int);
+        void adjustVolume(int);
 
     private:
         QPushButton* loadButton;
         QProgressBar* progressBar;
         QDial* knob;
+
+        float volume;
 
         QGridLayout* layout;
 

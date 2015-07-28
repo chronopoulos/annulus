@@ -19,6 +19,10 @@ Looper::Looper(QWidget* parent, QString path) : QFrame(parent) {
 
     knob = new QDial;
     knob->setFocusPolicy(Qt::NoFocus);
+    QObject::connect(knob, SIGNAL(valueChanged(int)),
+        this, SLOT(adjustVolume(int)));
+    volume = 0.5;
+    knob->setValue(50);
 
     layout = new QGridLayout;
     layout->addWidget(loadButton, 0,0, 2,1);
@@ -82,10 +86,10 @@ void Looper::importFile() {
 
 short Looper::getNextSample(void) {
 
-    tmpSample = sampleBuffer[nextIndex];
+    tmpSample = sampleBuffer[nextIndex]*volume;
+
     if (++nextIndex == nframes*nchannels) {
         nextIndex = 0;
-        cout << "Looper looped!" << endl;
     }
 
     if ( (nextIndex % progressBarInterval) == 0) {
@@ -104,6 +108,13 @@ void Looper::reset(void) {
 void Looper::updateProgressBar(int val) {
 
     progressBar->setValue(val);
+
+}
+
+void Looper::adjustVolume(int val) {
+
+    volume = val/100.;
+    cout << "Volume: " << volume << endl;
 
 }
 
