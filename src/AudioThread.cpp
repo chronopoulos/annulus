@@ -3,6 +3,8 @@
 
 using namespace std;
 
+extern bool VERBOSE;
+
 AudioThread::AudioThread(QObject* parent, vector<Looper*>* loopers, QMutex* loopersMutex)
     : QThread(parent)
 {
@@ -142,8 +144,10 @@ void AudioThread::run()
 
             } else {
 
-                cout << "avail, used = " << avail << ", "
-                     << (snd_pcm_sframes_t)nframes_buffer - avail << endl;
+                if (VERBOSE) {
+                    cout << "avail, used = " << avail << ", "
+                         << (snd_pcm_sframes_t)nframes_buffer - avail << endl;
+                }
 
                 if ( (snd_pcm_uframes_t)avail > nframes_period ) {
 

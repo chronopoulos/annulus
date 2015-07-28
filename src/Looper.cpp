@@ -5,6 +5,8 @@
 
 using namespace std;
 
+extern bool VERBOSE;
+
 Looper::Looper(QWidget* parent, QString path) : QFrame(parent) {
 
     this->path = path;
@@ -90,6 +92,7 @@ short Looper::getNextSample(void) {
 
     if (++nextIndex == nframes*nchannels) {
         nextIndex = 0;
+        if (VERBOSE) cout << "Looper looped!" << endl;
     }
 
     if ( (nextIndex % progressBarInterval) == 0) {
