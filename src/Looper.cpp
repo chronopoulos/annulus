@@ -117,7 +117,6 @@ void Looper::updateProgressBar(int val) {
 void Looper::adjustVolume(int val) {
 
     volume = val/100.;
-    cout << "Volume: " << volume << endl;
 
 }
 

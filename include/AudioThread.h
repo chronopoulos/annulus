@@ -1,3 +1,6 @@
+#ifndef AUDIOTHREAD_H
+#define AUDIOTHREAD_H
+
 #include <alsa/asoundlib.h>
 #include <QtGui>
 #include <QtCore>
@@ -11,16 +14,13 @@ class AudioThread : public QThread
     Q_OBJECT
 
     public:
-        AudioThread(QObject*, vector<Looper*>*, QMutex*);
+        AudioThread(QObject*);
         void run(void);
 
     public slots:
         void stop(void);
 
     private:
-        QMutex* loopersMutex;
-        vector<Looper*>* loopers;
-
         snd_pcm_t* pcm_handle;
         snd_pcm_hw_params_t* hw_params;
         snd_pcm_sw_params_t* sw_params;
@@ -41,3 +41,5 @@ class AudioThread : public QThread
         void xrunOccurred(void);
 
 };
+
+#endif

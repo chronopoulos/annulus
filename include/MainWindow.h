@@ -17,8 +17,6 @@ class MainWindow : public QWidget
         PlayPauseButton* playPauseButton;
         QPushButton* settingsButton;
 
-        QMutex loopersMutex;
-        vector<Looper*>* loopers;
 
         QPushButton* addButton;
 

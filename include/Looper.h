@@ -1,3 +1,6 @@
+#ifndef LOOPER_H
+#define LOOPER_H
+
 #include <QtGui>
 
 class Looper : public QFrame
@@ -38,3 +41,5 @@ class Looper : public QFrame
         void progressBarUpdated(int);
 
 };
+
+#endif

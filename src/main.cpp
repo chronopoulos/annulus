@@ -1,10 +1,13 @@
 #include <QApplication>
+#include "Annulus.h"
 #include "MainWindow.h"
 #include <iostream>
 
 using namespace std;
 
 bool VERBOSE = false;
+
+Annulus annulus;
 
 int main(int argc, char *argv[])
 {

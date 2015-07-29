@@ -14,15 +14,18 @@ HEADERS += include/MainWindow.h
 HEADERS += include/Looper.h
 HEADERS += include/AudioThread.h
 HEADERS += include/PlayPauseButton.h
+HEADERS += include/Annulus.h
 
 SOURCES += src/main.cpp
 SOURCES += src/MainWindow.cpp
 SOURCES += src/Looper.cpp
 SOURCES += src/AudioThread.cpp
 SOURCES += src/PlayPauseButton.cpp
+SOURCES += src/Annulus.cpp
 
 LIBS += -lsndfile -lasound
 
+# optimization
 #QMAKE_CXXFLAGS += -O3
 
 # GDB

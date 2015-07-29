@@ -1,16 +1,16 @@
 #include <iostream>
 #include <AudioThread.h>
+#include "Annulus.h"
 
 using namespace std;
 
 extern bool VERBOSE;
 
-AudioThread::AudioThread(QObject* parent, vector<Looper*>* loopers, QMutex* loopersMutex)
+extern Annulus annulus;
+
+AudioThread::AudioThread(QObject* parent)
     : QThread(parent)
 {
-
-    this->loopers = loopers;
-    this->loopersMutex = loopersMutex;
 
     openPCM();
     setHardwareParams();
@@ -111,16 +111,11 @@ void AudioThread::run()
 {
 
     snd_pcm_sframes_t avail, framesWritten;
-    unsigned int frameIndex_period;
 
     stopRequested = false;
 
-    // reset all loopers
-    loopersMutex->lock();
-    for (vector<Looper*>::iterator looper = loopers->begin(); looper != loopers->end(); looper++) {
-        (*looper)->reset();
-    }
-    loopersMutex->unlock();
+    // reset playhead
+    annulus.reset();
 
     snd_pcm_prepare(pcm_handle);
 
@@ -134,7 +129,7 @@ void AudioThread::run()
             break;
         }
 
-        if (loopers->size() > 0) { // need to lock mutex here?
+        if (annulus.getNLoopers() > 0) {
 
             // might want to think about using snd_pcm_avail() here instead
             avail = snd_pcm_avail_update (pcm_handle);
@@ -152,14 +147,7 @@ void AudioThread::run()
                 if ( (snd_pcm_uframes_t)avail > nframes_period ) {
 
                     memset(periodBuffer, 0, nchannels*nframes_period*sizeof(short));
-                    loopersMutex->lock();
-                    for (frameIndex_period = 0; frameIndex_period< nframes_period; frameIndex_period++) {
-                        for (vector<Looper*>::iterator looper = loopers->begin(); looper != loopers->end(); looper++) {
-                            periodBuffer[2*frameIndex_period] += (*looper)->getNextSample();
-                            periodBuffer[2*frameIndex_period+1] += (*looper)->getNextSample();
-                        }
-                    }
-                    loopersMutex->unlock();
+                    annulus.getNextPeriod(periodBuffer, nframes_period);
 
                     framesWritten = snd_pcm_writei(pcm_handle, periodBuffer, nframes_period);
                     if (framesWritten < 0) {

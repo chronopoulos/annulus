@@ -1,8 +1,12 @@
 #include <iostream>
 #include <QtCore>
 #include <MainWindow.h>
+#include "Annulus.h"
+#include "AudioThread.h"
 
 using namespace std;
+
+extern Annulus annulus;
 
 // constructor
 MainWindow::MainWindow(void) : QWidget() {
@@ -14,10 +18,6 @@ MainWindow::MainWindow(void) : QWidget() {
     settingsButton = new QPushButton();
     settingsButton->setFocusPolicy(Qt::NoFocus);
     settingsButton->setIcon(QIcon("img/settings.png"));
-
-    loopersMutex.lock();
-    loopers = new vector<Looper*>();
-    loopersMutex.unlock();
 
     addButton = new QPushButton("+");
     addButton->setFocusPolicy(Qt::NoFocus);
@@ -32,7 +32,7 @@ MainWindow::MainWindow(void) : QWidget() {
     this->setWindowTitle("annulus");
     this->setMinimumWidth(300);
 
-    audioThread = new AudioThread(this, loopers, &loopersMutex);
+    audioThread = new AudioThread(this);
     QObject::connect(playPauseButton, SIGNAL(playSelected(void)),
                         audioThread, SLOT(start(void)));
     QObject::connect(playPauseButton, SIGNAL(pauseSelected(void)),
@@ -46,13 +46,8 @@ void MainWindow::addLoopers(void) {
 
     QStringList files = QFileDialog::getOpenFileNames(this, "Select Loops",
             "/home/chrono/music/samples/loops/annulus");
-    int n = files.size();
-    if (n>0) {
-        QMutexLocker locker(&loopersMutex);
-        cout << "addLoopers got mutex" << endl;
-        for (int i=0; i<files.size(); i++) {
-            loopers->push_back(new Looper(this, files.at(i)));
-        }
+    if (files.size()>0) {
+        annulus.addLoopers(files, this);
         refreshLoopers();
     }
 
@@ -60,9 +55,9 @@ void MainWindow::addLoopers(void) {
 
 void MainWindow::refreshLoopers(void) {
 
-    int nloopers = loopers->size();
+    int nloopers = annulus.getNLoopers();
     for (int i=0; i<nloopers; i++) {
-        layout->addWidget(loopers->at(i), i+2,0, 1,2);
+        layout->addWidget(annulus.getLooper(i), i+2,0, 1,2);
     }
     this->show();
 
@@ -70,13 +65,13 @@ void MainWindow::refreshLoopers(void) {
 
 void MainWindow::startAudio(void) {
 
-    audioThread->start();
+    //audioThread->start();
 
 }
 
 void MainWindow::stopAudio(void) {
 
-    audioThread->stop();
+    //audioThread->stop();
 
 }
 
