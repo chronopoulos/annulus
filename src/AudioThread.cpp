@@ -169,6 +169,7 @@ void AudioThread::run()
                     }
                 }
             }
+            sleep(0.001); // temporary solution to the CPU-railing problem
 
         } else {
             sleep(0.01);
