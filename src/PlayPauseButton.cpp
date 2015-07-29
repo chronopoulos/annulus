@@ -22,7 +22,7 @@ void PlayPauseButton::toggle(void) {
         emit pauseSelected();
     } else {
         this->setIcon(QIcon("img/pause.png"));
-        this->setStyleSheet("background-color:blue;");
+        this->setStyleSheet("background:rgb(200,100,150);");
         isPlaying = true;
         emit playSelected();
     }
