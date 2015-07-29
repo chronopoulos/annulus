@@ -25,6 +25,7 @@ Looper::Looper(QWidget* parent, QString path) : QFrame(parent) {
         this, SLOT(adjustVolume(int)));
     volume = 0.5;
     knob->setValue(50);
+    knob->setMaximumWidth(50);
 
     layout = new QGridLayout;
     layout->addWidget(loadButton, 0,0, 2,1);
