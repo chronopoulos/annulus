@@ -63,18 +63,6 @@ void MainWindow::refreshLoopers(void) {
 
 }
 
-void MainWindow::startAudio(void) {
-
-    //audioThread->start();
-
-}
-
-void MainWindow::stopAudio(void) {
-
-    //audioThread->stop();
-
-}
-
 void MainWindow::keyPressEvent(QKeyEvent* k) {
 
     if (!k->isAutoRepeat()) {
@@ -87,6 +75,13 @@ void MainWindow::keyPressEvent(QKeyEvent* k) {
                 break;
         }
     }
+
+}
+
+void MainWindow::closeEvent(QCloseEvent* e) {
+
+    audioThread->stop();
+    e->accept();
 
 }
 

@@ -26,8 +26,7 @@ class MainWindow : public QWidget
 
     public slots:
         void addLoopers(void);
-        void startAudio(void);
-        void stopAudio(void);
         void keyPressEvent(QKeyEvent*);
+        void closeEvent(QCloseEvent*);
 
 };
