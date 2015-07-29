@@ -30,7 +30,7 @@ Looper::Looper(QWidget* parent, QString path) : QFrame(parent) {
     layout = new QGridLayout;
     layout->addWidget(loadButton, 0,0, 2,1);
     layout->addWidget(progressBar, 1,0, 2,1);
-    layout->addWidget(knob, 0,2, 2,2);
+    layout->addWidget(knob, 0,2, 1,1);
 
     this->setLayout(layout);
 
