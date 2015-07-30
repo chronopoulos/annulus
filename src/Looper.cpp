@@ -27,10 +27,23 @@ Looper::Looper(QWidget* parent, QString path) : QFrame(parent) {
     knob->setValue(50);
     knob->setMaximumWidth(50);
 
+    activateCheckBox = new QCheckBox;
+    activateCheckBox->setFocusPolicy(Qt::NoFocus);
+    QObject::connect(activateCheckBox, SIGNAL(toggled(bool)),
+        this, SLOT(toggleActive(bool)));
+
+    conductorCheckBox = new QCheckBox;
+    conductorCheckBox->setFocusPolicy(Qt::NoFocus);
+    conductorCheckBox->setAutoExclusive(true);
+    QObject::connect(conductorCheckBox, SIGNAL(toggled(bool)),
+        this, SLOT(toggleConductor(bool)));
+
     layout = new QGridLayout;
     layout->addWidget(loadButton, 0,0, 2,1);
     layout->addWidget(progressBar, 1,0, 2,1);
-    layout->addWidget(knob, 0,2, 1,1);
+    layout->addWidget(activateCheckBox, 0,2, 1,1);
+    layout->addWidget(conductorCheckBox, 0,3, 1,1);
+    layout->addWidget(knob, 1,2, 2,2);
 
     this->setLayout(layout);
 
@@ -44,8 +57,14 @@ Looper::Looper(QWidget* parent, QString path) : QFrame(parent) {
 
     progressBarInterval = 4410; // 10 Hz
 
+    // this needs to be a signal/slot because AudioThread calls getNextSample
     QObject::connect(this, SIGNAL(progressBarUpdated(int)),
         this, SLOT(updateProgressBar(int)));
+
+    isPrimed= false;
+    isDeprimed= false;
+    isActive = false;
+    isConductor = false;
 
 }
 
@@ -93,7 +112,12 @@ short Looper::getNextSample(void) {
 
     if (++nextIndex == nframes*nchannels) {
         nextIndex = 0;
-        if (VERBOSE) cout << "Looper looped!" << endl;
+        if (isDeprimed) {
+            isActive = false;
+            isDeprimed = false;
+        } else if (isConductor) {
+            emit loopedAsConductor();
+        }
     }
 
     if ( (nextIndex % progressBarInterval) == 0) {
@@ -118,6 +142,54 @@ void Looper::updateProgressBar(int val) {
 void Looper::adjustVolume(int val) {
 
     volume = val/100.;
+
+}
+
+QCheckBox* Looper::getConductorCheckBox(void) {
+
+    return conductorCheckBox;
+
+}
+
+void Looper::toggleActive(bool enable) {
+
+    if (enable) {
+        isPrimed = true;
+        if (isConductor) {
+            isActive = true;
+        }
+    } else {
+        if (isActive) {
+            isDeprimed = true;
+        } else {
+            isActive = false;
+            isPrimed= false;
+        }
+    }
+
+}
+
+void Looper::toggleConductor(bool enable) {
+
+    if (enable) {
+        isConductor = true;
+    } else {
+        isConductor = false;
+    }
+
+}
+
+void Looper::handleConductorLoop(void) {
+
+    if (isConductor) {
+        return;
+    } else {
+        if (isPrimed) {
+            reset();
+            isPrimed = false;
+            isActive = true;
+        }
+    }
 
 }
 

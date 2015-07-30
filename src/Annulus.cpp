@@ -6,7 +6,7 @@ using namespace std;
 
 extern bool VERBOSE;
 
-Annulus::Annulus(void) {
+Annulus::Annulus(void) : QObject() {
 
     mutex = new QMutex;
 
@@ -15,16 +15,21 @@ Annulus::Annulus(void) {
     loopers = new vector<Looper*>();
     nloopers = 0;
 
+    conductorButtonGroup = new QButtonGroup;
+
 }
 
 void Annulus::getNextPeriod(short* buff, snd_pcm_uframes_t nframes_period) {
+    //  buff should point to a buffer of shorts which has been memset to zero
 
     QMutexLocker locker(mutex);
 
     for (frameIndex = 0; frameIndex < nframes_period; frameIndex++) {
         for (vector<Looper*>::iterator looper = loopers->begin(); looper != loopers->end(); looper++) {
-            buff[2*frameIndex] += (*looper)->getNextSample();
-            buff[2*frameIndex+1] += (*looper)->getNextSample();
+            if ((*looper)->isActive) {
+                buff[2*frameIndex] += (*looper)->getNextSample();
+                buff[2*frameIndex+1] += (*looper)->getNextSample();
+            }
         }
     }
 
@@ -34,8 +39,19 @@ void Annulus::addLoopers(QStringList pathList, QWidget* parent) {
 
     QMutexLocker locker(mutex);
 
+    Looper* tmpLooper;
     for (int i=0; i<pathList.size(); i++) {
-        loopers->push_back(new Looper(parent, pathList.at(i)));
+
+        tmpLooper = new Looper(parent, pathList.at(i));
+        loopers->push_back(tmpLooper);
+        conductorButtonGroup->addButton(tmpLooper->getConductorCheckBox());
+
+        // conductor topology: all to all
+        QObject::connect(tmpLooper, SIGNAL(loopedAsConductor(void)),
+            this, SIGNAL(conductorLooped(void)));
+        QObject::connect(this, SIGNAL(conductorLooped(void)),
+            tmpLooper, SLOT(handleConductorLoop(void)));
+        
     }
 
 }

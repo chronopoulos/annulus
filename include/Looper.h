@@ -11,24 +11,35 @@ class Looper : public QFrame
         Looper(QWidget*, QString);
         short getNextSample(void);
         void reset(void);
+        QCheckBox* getConductorCheckBox(void);
+        bool isPrimed;
+        bool isDeprimed;
+        bool isActive;
+        bool isConductor;
+        QString path;
+        QString filename;
 
     public slots:
         void browseLoops(void);
         void importFile(void);
         void updateProgressBar(int);
         void adjustVolume(int);
+        void toggleActive(bool);
+        void toggleConductor(bool);
+        void handleConductorLoop(void);
+
 
     private:
         QPushButton* loadButton;
         QProgressBar* progressBar;
         QDial* knob;
+        QCheckBox* activateCheckBox;
+        QCheckBox* conductorCheckBox;
 
         float volume;
 
         QGridLayout* layout;
 
-        QString path;
-        QString filename;
         int nframes;
         int nchannels;
         short* sampleBuffer;
@@ -39,6 +50,7 @@ class Looper : public QFrame
 
     signals:
         void progressBarUpdated(int);
+        void loopedAsConductor(void);
 
 };
 

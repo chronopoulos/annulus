@@ -129,52 +129,38 @@ void AudioThread::run()
             break;
         }
 
-        if (annulus.getNLoopers() > 0) {
+        // might want to think about using snd_pcm_avail() here instead
+        avail = snd_pcm_avail_update (pcm_handle);
+        if (avail < 0) {
 
-            // might want to think about using snd_pcm_avail() here instead
-            avail = snd_pcm_avail_update (pcm_handle);
-            if (avail < 0) {
+            cout << "snd_pcm_avail returned error: " << snd_strerror(avail) << endl;
 
-                cout << "snd_pcm_avail returned error: " << snd_strerror(avail) << endl;
+        } else if ( (snd_pcm_uframes_t)avail > nframes_period ) {
 
-            } else {
+            memset(periodBuffer, 0, nchannels*nframes_period*sizeof(short));
+            annulus.getNextPeriod(periodBuffer, nframes_period);
 
-                if (VERBOSE) {
-                    cout << "avail, used = " << avail << ", "
-                         << (snd_pcm_sframes_t)nframes_buffer - avail << endl;
-                }
-
-                if ( (snd_pcm_uframes_t)avail > nframes_period ) {
-
-                    memset(periodBuffer, 0, nchannels*nframes_period*sizeof(short));
-                    annulus.getNextPeriod(periodBuffer, nframes_period);
-
-                    framesWritten = snd_pcm_writei(pcm_handle, periodBuffer, nframes_period);
-                    if (framesWritten < 0) {
-                        switch (framesWritten) {
-                            case -EBADFD:
-                                cout << "PCM is not in the right state" << endl;
-                                break;
-                            case -EPIPE:
-                                cout << "an underrun occurred" << endl;
-                                emit xrunOccurred();
-                                break;
-                            case -ESTRPIPE:
-                                cout << "a suspend event occurred (stream is suspended and waiting for an application recovery)" << endl;
-                                break;
-                        }
+            framesWritten = snd_pcm_writei(pcm_handle, periodBuffer, nframes_period);
+            if (framesWritten < 0) {
+                switch (framesWritten) {
+                    case -EBADFD:
+                        cout << "PCM is not in the right state" << endl;
                         break;
-                    } else if ((snd_pcm_uframes_t)framesWritten < nframes_period) {
-                        cout << "framesWritten was less that nframes_period; that's weird" << endl;
-                    }
+                    case -EPIPE:
+                        cout << "an underrun occurred" << endl;
+                        emit xrunOccurred();
+                        break;
+                    case -ESTRPIPE:
+                        cout << "a suspend event occurred (stream is suspended and waiting for an application recovery)" << endl;
+                        break;
                 }
+                break;
+            } else if ((snd_pcm_uframes_t)framesWritten < nframes_period) {
+                cout << "framesWritten was less that nframes_period; that's weird" << endl;
             }
-            sleep(0.001); // temporary solution to the CPU-railing problem
 
-        } else {
-            sleep(0.01);
-        } 
-
+        }
+        sleep(0.001); // temporary solution to the CPU-railing problem
 
     }
 
