@@ -73,6 +73,36 @@ void MainWindow::keyPressEvent(QKeyEvent* k) {
             case Qt::Key_I:
                 addLoopers();
                 break;
+            case Qt::Key_1:
+                annulus.toggleLooperByIndex(0);
+                break;
+            case Qt::Key_2:
+                annulus.toggleLooperByIndex(1);
+                break;
+            case Qt::Key_3:
+                annulus.toggleLooperByIndex(2);
+                break;
+            case Qt::Key_4:
+                annulus.toggleLooperByIndex(3);
+                break;
+            case Qt::Key_5:
+                annulus.toggleLooperByIndex(4);
+                break;
+            case Qt::Key_6:
+                annulus.toggleLooperByIndex(5);
+                break;
+            case Qt::Key_7:
+                annulus.toggleLooperByIndex(6);
+                break;
+            case Qt::Key_8:
+                annulus.toggleLooperByIndex(7);
+                break;
+            case Qt::Key_9:
+                annulus.toggleLooperByIndex(8);
+                break;
+            case Qt::Key_0:
+                annulus.toggleLooperByIndex(9);
+                break;
         }
     }
 

@@ -15,6 +15,8 @@ HEADERS += include/Looper.h
 HEADERS += include/AudioThread.h
 HEADERS += include/PlayPauseButton.h
 HEADERS += include/Annulus.h
+HEADERS += include/ActivationButton.h
+HEADERS += include/Counter.h
 
 SOURCES += src/main.cpp
 SOURCES += src/MainWindow.cpp
@@ -22,6 +24,8 @@ SOURCES += src/Looper.cpp
 SOURCES += src/AudioThread.cpp
 SOURCES += src/PlayPauseButton.cpp
 SOURCES += src/Annulus.cpp
+SOURCES += src/ActivationButton.cpp
+SOURCES += src/Counter.cpp
 
 LIBS += -lsndfile -lasound
 

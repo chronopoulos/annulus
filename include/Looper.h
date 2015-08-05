@@ -1,7 +1,9 @@
 #ifndef LOOPER_H
-#define LOOPER_H
-
+#define LOOPER_H 
 #include <QtGui>
+#include "ActivationButton.h"
+
+enum looperstate_t {STATE_INACTIVE, STATE_DEPRIMED, STATE_PRIMED, STATE_ACTIVE};
 
 class Looper : public QFrame
 {
@@ -10,47 +12,50 @@ class Looper : public QFrame
     public:
         Looper(QWidget*, QString);
         short getNextSample(void);
+        void getFirstFrame(short*);
+        void getNextFrame(short*);
         void reset(void);
-        QCheckBox* getConductorCheckBox(void);
-        bool isPrimed;
-        bool isDeprimed;
-        bool isActive;
-        bool isConductor;
         QString path;
         QString filename;
+        bool isPlaying(void);
+        void transition(void);
 
     public slots:
         void browseLoops(void);
         void importFile(void);
         void updateProgressBar(int);
         void adjustVolume(int);
-        void toggleActive(bool);
-        void toggleConductor(bool);
-        void handleConductorLoop(void);
-
+        void toggleState(void);
+        void handleMasterButton(void);
 
     private:
         QPushButton* loadButton;
         QProgressBar* progressBar;
         QDial* knob;
-        QCheckBox* activateCheckBox;
-        QCheckBox* conductorCheckBox;
+        ActivationButton* activationButton;
+        QPushButton* masterButton;
+        QGridLayout* layout;
+
+        looperstate_t state;
 
         float volume;
-
-        QGridLayout* layout;
 
         int nframes;
         int nchannels;
         short* sampleBuffer;
         int nextIndex;
+        int frameIndex;
         short tmpSample;
 
         int progressBarInterval;
 
     signals:
         void progressBarUpdated(int);
-        void loopedAsConductor(void);
+        void deactivated(void);
+        void deprimed(void);
+        void primed(void);
+        void activated(void);
+        void becameMaster(int);
 
 };
 

@@ -15,7 +15,7 @@ Annulus::Annulus(void) : QObject() {
     loopers = new vector<Looper*>();
     nloopers = 0;
 
-    conductorButtonGroup = new QButtonGroup;
+    counter = new Counter;
 
 }
 
@@ -24,11 +24,17 @@ void Annulus::getNextPeriod(short* buff, snd_pcm_uframes_t nframes_period) {
 
     QMutexLocker locker(mutex);
 
+    short frameBuff[2];
+
     for (frameIndex = 0; frameIndex < nframes_period; frameIndex++) {
+        counter->increment();
+        bool loop = counter->isReset();
         for (vector<Looper*>::iterator looper = loopers->begin(); looper != loopers->end(); looper++) {
-            if ((*looper)->isActive) {
-                buff[2*frameIndex] += (*looper)->getNextSample();
-                buff[2*frameIndex+1] += (*looper)->getNextSample();
+            if (loop) (*looper)->reset();
+            if ((*looper)->isPlaying()) {
+                (*looper)->getNextFrame(frameBuff);
+                buff[2*frameIndex] += *frameBuff;
+                buff[2*frameIndex+1] += *(frameBuff+1);
             }
         }
     }
@@ -44,13 +50,9 @@ void Annulus::addLoopers(QStringList pathList, QWidget* parent) {
 
         tmpLooper = new Looper(parent, pathList.at(i));
         loopers->push_back(tmpLooper);
-        conductorButtonGroup->addButton(tmpLooper->getConductorCheckBox());
 
-        // conductor topology: all to all
-        QObject::connect(tmpLooper, SIGNAL(loopedAsConductor(void)),
-            this, SIGNAL(conductorLooped(void)));
-        QObject::connect(this, SIGNAL(conductorLooped(void)),
-            tmpLooper, SLOT(handleConductorLoop(void)));
+        QObject::connect(tmpLooper, SIGNAL(becameMaster(int)),
+            counter, SLOT(setLength(int)));
         
     }
 
@@ -76,8 +78,19 @@ void Annulus::reset(void) {
 
     QMutexLocker locker(mutex);
 
+    counter->reset();
+
     for (vector<Looper*>::iterator looper = loopers->begin(); looper != loopers->end(); looper++) {
         (*looper)->reset();
+    }
+
+}
+
+void Annulus::toggleLooperByIndex(int i) {
+
+    if (getNLoopers() > i) {
+        QMutexLocker locker(mutex);
+        loopers->at(i)->toggleState();
     }
 
 }

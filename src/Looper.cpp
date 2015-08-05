@@ -27,22 +27,32 @@ Looper::Looper(QWidget* parent, QString path) : QFrame(parent) {
     knob->setValue(50);
     knob->setMaximumWidth(50);
 
-    activateCheckBox = new QCheckBox;
-    activateCheckBox->setFocusPolicy(Qt::NoFocus);
-    QObject::connect(activateCheckBox, SIGNAL(toggled(bool)),
-        this, SLOT(toggleActive(bool)));
+    activationButton = new ActivationButton;
+    activationButton->setFocusPolicy(Qt::NoFocus);
+    QObject::connect(activationButton, SIGNAL(clicked(bool)),
+    //    this, SLOT(handleActivationButton(bool)));
+        this, SLOT(toggleState(void)));
+    // need reciprocal signal-slot relationship so that we're not drawing outside the GUI thread
+    // note: this could be one connection if we register the looperstate_t enum with the meta-object system
+    QObject::connect(this, SIGNAL(deactivated(void)),
+        activationButton, SLOT(setInactive(void)));
+    QObject::connect(this, SIGNAL(deprimed(void)),
+        activationButton, SLOT(setDeprimed(void)));
+    QObject::connect(this, SIGNAL(primed(void)),
+        activationButton, SLOT(setPrimed(void)));
+    QObject::connect(this, SIGNAL(activated(void)),
+        activationButton, SLOT(setActive(void)));
 
-    conductorCheckBox = new QCheckBox;
-    conductorCheckBox->setFocusPolicy(Qt::NoFocus);
-    conductorCheckBox->setAutoExclusive(true);
-    QObject::connect(conductorCheckBox, SIGNAL(toggled(bool)),
-        this, SLOT(toggleConductor(bool)));
+    masterButton = new QPushButton("Master");
+    masterButton->setFocusPolicy(Qt::NoFocus);
+    QObject::connect(masterButton, SIGNAL(clicked(void)),
+        this, SLOT(handleMasterButton(void)));
 
     layout = new QGridLayout;
     layout->addWidget(loadButton, 0,0, 2,1);
     layout->addWidget(progressBar, 1,0, 2,1);
-    layout->addWidget(activateCheckBox, 0,2, 1,1);
-    layout->addWidget(conductorCheckBox, 0,3, 1,1);
+    layout->addWidget(activationButton, 0,2, 1,1);
+    layout->addWidget(masterButton, 0,3, 1,1);
     layout->addWidget(knob, 1,2, 2,2);
 
     this->setLayout(layout);
@@ -61,10 +71,7 @@ Looper::Looper(QWidget* parent, QString path) : QFrame(parent) {
     QObject::connect(this, SIGNAL(progressBarUpdated(int)),
         this, SLOT(updateProgressBar(int)));
 
-    isPrimed= false;
-    isDeprimed= false;
-    isActive = false;
-    isConductor = false;
+    state = STATE_INACTIVE;
 
 }
 
@@ -76,6 +83,12 @@ void Looper::browseLoops(void) {
         path = tmpPath;
         importFile();
     }
+
+}
+
+bool Looper::isPlaying(void) {
+
+    return (state==STATE_ACTIVE) || (state==STATE_DEPRIMED);
 
 }
 
@@ -106,30 +119,46 @@ void Looper::importFile() {
 
 }
 
-short Looper::getNextSample(void) {
+void Looper::getNextFrame(short* frameBuffer) {
 
-    tmpSample = sampleBuffer[nextIndex]*volume;
-
-    if (++nextIndex == nframes*nchannels) {
-        nextIndex = 0;
-        if (isDeprimed) {
-            isActive = false;
-            isDeprimed = false;
-        } else if (isConductor) {
-            emit loopedAsConductor();
-        }
+    for (int i=0; i<nchannels; i++) {
+        *(frameBuffer+i) = sampleBuffer[nchannels*frameIndex+i]*volume;
     }
 
-    if ( (nextIndex % progressBarInterval) == 0) {
-        emit progressBarUpdated(nextIndex/nchannels);
+    if ( (frameIndex % progressBarInterval) == 0) {
+        emit progressBarUpdated(frameIndex);
     }
 
-    return tmpSample;
+    // check for loop
+    if (++frameIndex == nframes) {
+        frameIndex = 0;
+    }
+
+
+
+}
+
+void Looper::transition(void) {
+
+    if (state == STATE_PRIMED) {
+
+        state = STATE_ACTIVE;
+        emit activated();
+
+    } else if (state == STATE_DEPRIMED) {
+
+        state = STATE_INACTIVE;
+        emit deactivated();
+
+    }
+
 }
 
 void Looper::reset(void) {
 
-    nextIndex = 0;
+    frameIndex = 0;
+    transition();
+    emit progressBarUpdated(frameIndex);
 
 }
 
@@ -145,51 +174,34 @@ void Looper::adjustVolume(int val) {
 
 }
 
-QCheckBox* Looper::getConductorCheckBox(void) {
+void Looper::handleMasterButton(void) {
 
-    return conductorCheckBox;
-
-}
-
-void Looper::toggleActive(bool enable) {
-
-    if (enable) {
-        isPrimed = true;
-        if (isConductor) {
-            isActive = true;
-        }
-    } else {
-        if (isActive) {
-            isDeprimed = true;
-        } else {
-            isActive = false;
-            isPrimed= false;
-        }
-    }
+    emit becameMaster(nframes);
 
 }
 
-void Looper::toggleConductor(bool enable) {
+void Looper::toggleState(void) {
 
-    if (enable) {
-        isConductor = true;
-    } else {
-        isConductor = false;
-    }
+    // see "state-square" logic for explanation
 
-}
-
-void Looper::handleConductorLoop(void) {
-
-    if (isConductor) {
-        return;
-    } else {
-        if (isPrimed) {
-            reset();
-            isPrimed = false;
-            isActive = true;
+        switch (state) {
+            case STATE_INACTIVE:
+                state = STATE_PRIMED;
+                emit primed();
+                break;
+            case STATE_DEPRIMED:
+                state = STATE_ACTIVE;
+                emit activated();
+                break;
+            case STATE_PRIMED:
+                state = STATE_INACTIVE;
+                emit deactivated();
+                break;
+            case STATE_ACTIVE:
+                state = STATE_DEPRIMED;
+                emit deprimed();
+                break;
         }
-    }
 
 }
 

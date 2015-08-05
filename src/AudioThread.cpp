@@ -27,8 +27,12 @@ void AudioThread::openPCM(void)
 
 	//err = snd_pcm_open(&pcm_handle, "default",
     //                    SND_PCM_STREAM_PLAYBACK, 0);
+
 	err = snd_pcm_open(&pcm_handle, "sysdefault:CARD=PCH",
                         SND_PCM_STREAM_PLAYBACK, 0);
+
+	//err = snd_pcm_open(&pcm_handle, "sysdefault:CARD=K6",
+    //                  SND_PCM_STREAM_PLAYBACK, 0);
 
     if (err) {
         cout << "Error in AudioThread::openPCM" << endl;
@@ -72,6 +76,12 @@ void AudioThread::setHardwareParams(void)
 
 void AudioThread::allocatePeriodBuffer(void)
 {
+    // set buffer and period size (near)
+    nframes_buffer = 1024;
+    nframes_period = 64;
+    snd_pcm_hw_params_set_buffer_size_near(pcm_handle, hw_params, &nframes_buffer);
+	snd_pcm_hw_params_set_period_size_near(pcm_handle, hw_params, &nframes_period, 0);
+
     // get buffer and period size
     snd_pcm_hw_params_get_buffer_size(hw_params, &nframes_buffer);
 	snd_pcm_hw_params_get_period_size(hw_params, &nframes_period, 0);

@@ -4,10 +4,11 @@
 #include <iostream>
 #include <QString>
 #include "Looper.h"
+#include "Counter.h"
 #include <alsa/asoundlib.h>
 
 // this class is derived from QObject in order to enable signal forwarding,
-//  which is used in the conductor topology
+//  which is used in the master-slave topology
 #include <QtGui>
 
 using namespace std;
@@ -25,6 +26,7 @@ class Annulus : public QObject
         Looper* getLooper(int);
         int getNLoopers(void);
         void reset(void);
+        void toggleLooperByIndex(int);
 
 
     private:
@@ -33,10 +35,12 @@ class Annulus : public QObject
         int nloopers;
         unsigned int frameIndex;
 
-        QButtonGroup* conductorButtonGroup;
+        short* frameBuff;
+
+        Counter* counter;
 
     signals:
-        void conductorLooped(void);
+        void masterLooped(void);
 
 };
 
