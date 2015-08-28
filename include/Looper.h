@@ -19,6 +19,7 @@ class Looper : public QFrame
         QString filename;
         bool isPlaying(void);
         void transition(void);
+        QPushButton* masterButton;
 
     public slots:
         void browseLoops(void);
@@ -26,15 +27,18 @@ class Looper : public QFrame
         void updateProgressBar(int);
         void adjustVolume(int);
         void toggleState(void);
-        void handleMasterButton(void);
+        void toggleMaster(bool);
+        void handleLockButton(void);
 
     private:
         QPushButton* loadButton;
         QProgressBar* progressBar;
         QDial* knob;
         ActivationButton* activationButton;
-        QPushButton* masterButton;
+        QPushButton* lockButton;
         QGridLayout* layout;
+
+        bool isMaster;
 
         looperstate_t state;
 

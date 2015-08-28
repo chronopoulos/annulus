@@ -1,4 +1,5 @@
 #include <Counter.h>
+#include <iostream>
 
 using namespace std;
 
@@ -13,6 +14,7 @@ void Counter::increment(void) {
 
     if (++index == length) {
         index = 0;
+        cout << "counter looped!" << endl;
     }
 
 }
@@ -32,5 +34,6 @@ bool Counter::isReset(void) {
 void Counter::setLength(int length) {
 
     this->length = length;
+    cout << "counter length set to " << length << endl;
 
 }

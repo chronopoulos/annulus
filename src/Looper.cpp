@@ -25,12 +25,11 @@ Looper::Looper(QWidget* parent, QString path) : QFrame(parent) {
         this, SLOT(adjustVolume(int)));
     volume = 0.5;
     knob->setValue(50);
-    knob->setMaximumWidth(50);
+    knob->setMaximumWidth(40);
 
     activationButton = new ActivationButton;
     activationButton->setFocusPolicy(Qt::NoFocus);
     QObject::connect(activationButton, SIGNAL(clicked(bool)),
-    //    this, SLOT(handleActivationButton(bool)));
         this, SLOT(toggleState(void)));
     // need reciprocal signal-slot relationship so that we're not drawing outside the GUI thread
     // note: this could be one connection if we register the looperstate_t enum with the meta-object system
@@ -43,22 +42,28 @@ Looper::Looper(QWidget* parent, QString path) : QFrame(parent) {
     QObject::connect(this, SIGNAL(activated(void)),
         activationButton, SLOT(setActive(void)));
 
-    masterButton = new QPushButton("Master");
+    masterButton = new QPushButton("M");
     masterButton->setFocusPolicy(Qt::NoFocus);
-    QObject::connect(masterButton, SIGNAL(clicked(void)),
-        this, SLOT(handleMasterButton(void)));
+    masterButton->setCheckable(true);
+    QObject::connect(masterButton, SIGNAL(toggled(bool)),
+        this, SLOT(toggleMaster(bool)));
+
+    lockButton = new QPushButton;
+    lockButton->setIcon(QIcon("img/locked.png"));
+    lockButton->setFocusPolicy(Qt::NoFocus);
+    lockButton->setCheckable(true);
+    QObject::connect(lockButton, SIGNAL(clicked(void)),
+        this, SLOT(handleLockButton(void)));
 
     layout = new QGridLayout;
-    layout->addWidget(loadButton, 0,0, 2,1);
-    layout->addWidget(progressBar, 1,0, 2,1);
-    layout->addWidget(activationButton, 0,2, 1,1);
-    layout->addWidget(masterButton, 0,3, 1,1);
-    layout->addWidget(knob, 1,2, 2,2);
+    layout->addWidget(masterButton, 0,0, 1,1);
+    layout->addWidget(lockButton, 1,0, 1,1);
+    layout->addWidget(loadButton, 0,1, 1,2);
+    layout->addWidget(progressBar, 1,1, 1,2);
+    layout->addWidget(activationButton, 0,3, 1,1);
+    layout->addWidget(knob, 1,3, 1,1);
 
     this->setLayout(layout);
-
-    this->setMinimumHeight(110);
-    //this->setMinimumWidth(250);
 
     this->setFrameStyle(QFrame::Panel | QFrame::Raised);
     this->setLineWidth(2);
@@ -72,6 +77,7 @@ Looper::Looper(QWidget* parent, QString path) : QFrame(parent) {
         this, SLOT(updateProgressBar(int)));
 
     state = STATE_INACTIVE;
+    isMaster = false;
 
 }
 
@@ -116,6 +122,8 @@ void Looper::importFile() {
     nextIndex = 0;
     loadButton->setText(filename);
     progressBar->setMaximum(nframes);
+
+    if (isMaster) emit becameMaster(nframes);
 
 }
 
@@ -174,15 +182,28 @@ void Looper::adjustVolume(int val) {
 
 }
 
-void Looper::handleMasterButton(void) {
+void Looper::toggleMaster(bool enable) {
 
-    emit becameMaster(nframes);
+    if (enable) {
+        masterButton->setChecked(true);
+        isMaster = true;
+        emit becameMaster(nframes);
+    } else {
+        masterButton->setChecked(false);
+        isMaster = false;
+    }
+
+}
+
+void Looper::handleLockButton(void) {
 
 }
 
 void Looper::toggleState(void) {
 
     // see "state-square" logic for explanation
+
+        cout << "in looper::togglestate" << endl;
 
         switch (state) {
             case STATE_INACTIVE:

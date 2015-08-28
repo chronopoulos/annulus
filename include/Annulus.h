@@ -35,6 +35,8 @@ class Annulus : public QObject
         int nloopers;
         unsigned int frameIndex;
 
+        QButtonGroup* masterButtonGroup;
+
         short* frameBuff;
 
         Counter* counter;

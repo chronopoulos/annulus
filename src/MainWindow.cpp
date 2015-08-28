@@ -30,7 +30,7 @@ MainWindow::MainWindow(void) : QWidget() {
 
     this->setLayout(layout);
     this->setWindowTitle("annulus");
-    this->setMinimumWidth(300);
+    this->setMinimumWidth(400);
 
     audioThread = new AudioThread(this);
     QObject::connect(playPauseButton, SIGNAL(playSelected(void)),

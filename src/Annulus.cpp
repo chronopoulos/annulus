@@ -17,6 +17,9 @@ Annulus::Annulus(void) : QObject() {
 
     counter = new Counter;
 
+    masterButtonGroup = new QButtonGroup;
+    masterButtonGroup->setExclusive(true);
+
 }
 
 void Annulus::getNextPeriod(short* buff, snd_pcm_uframes_t nframes_period) {
@@ -50,10 +53,13 @@ void Annulus::addLoopers(QStringList pathList, QWidget* parent) {
 
         tmpLooper = new Looper(parent, pathList.at(i));
         loopers->push_back(tmpLooper);
+        masterButtonGroup->addButton(tmpLooper->masterButton);
+
 
         QObject::connect(tmpLooper, SIGNAL(becameMaster(int)),
             counter, SLOT(setLength(int)));
         
+        if (loopers->size()==1) tmpLooper->toggleMaster(true);
     }
 
 }

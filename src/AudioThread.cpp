@@ -29,7 +29,7 @@ void AudioThread::openPCM(void)
     //                    SND_PCM_STREAM_PLAYBACK, 0);
 
 	err = snd_pcm_open(&pcm_handle, "sysdefault:CARD=PCH",
-                        SND_PCM_STREAM_PLAYBACK, 0);
+                      SND_PCM_STREAM_PLAYBACK, 0);
 
 	//err = snd_pcm_open(&pcm_handle, "sysdefault:CARD=K6",
     //                  SND_PCM_STREAM_PLAYBACK, 0);
